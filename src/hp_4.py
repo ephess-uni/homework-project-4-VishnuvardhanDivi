@@ -8,28 +8,58 @@ from collections import defaultdict
 def reformat_dates(old_dates):
     """Accepts a list of date strings in format yyyy-mm-dd, re-formats each
     element to a format dd mmm yyyy--01 Jan 2001."""
-    pass
+    new_dates = [datetime.strptime(olddate, "%Y-%m-%d").strftime('%d %b %Y') for olddate in old_dates]
+    return new_dates
 
 
 def date_range(start, n):
     """For input date string `start`, with format 'yyyy-mm-dd', returns
     a list of of `n` datetime objects starting at `start` where each
     element in the list is one day after the previous."""
-    pass
+    if not isinstance(start, str):
+        raise TypeError()
+
+    if not isinstance(n, int):
+        raise TypeError()
+    x = []
+    date_start = datetime.strptime(start, '%Y-%m-%d')
+    for i in range(n):
+        x.append(date_start + timedelta(days=i))
+    return x
 
 
 def add_date_range(values, start_date):
     """Adds a daily date range to the list `values` beginning with
     `start_date`.  The date, value pairs are returned as tuples
     in the returned list."""
-    pass
+    x = date_range(start_date, len(values))
+    return list(zip(x, values))
 
 
 def fees_report(infile, outfile):
     """Calculates late fees per patron id and writes a summary report to
     outfile."""
-    pass
-
+    infileheaders = ("book_uid,isbn_13,patron_id,date_checkout,date_due,date_returned".
+              split(','))
+    fees = defaultdict(float)
+    with open(infile, 'r') as f:
+        lines = DictReader(f, fieldnames=infileheaders)
+        rows = [row for row in lines]
+    rows.pop(0)
+    for each_line in rows:
+        patronID = each_line['patron_id']
+        date_due = datetime.strptime(each_line['date_due'], "%m/%d/%Y")
+        date_returned = datetime.strptime(each_line['date_returned'], "%m/%d/%Y")
+        daysLate = (date_returned - date_due).days
+        fees[patronID]+= 0.25 * daysLate if daysLate > 0 else 0.0
+    outfile_header = ['patron_id', 'late_fees']
+    finalIst = [
+        {'patron_id': pn, 'late_fees': f'{fs:0.2f}'} for pn, fs in fees.items()
+    ]
+    with open(outfile, 'w') as f:
+        writer = DictWriter(f,['patron_id', 'late_fees'])
+        writer.writeheader()
+        writer.writerows(finalIst)
 
 # The following main selection block will only run when you choose
 # "Run -> Module" in IDLE.  Use this section to run test code.  The
