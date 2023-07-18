@@ -21,7 +21,7 @@ def date_range(start, n):
 
     if not isinstance(n, int):
         raise TypeError()
-        
+    x = []
     date_start = datetime.strptime(start, '%Y-%m-%d')
     for i in range(n):
         x.append(date_start + timedelta(days=i))
